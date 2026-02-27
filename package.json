@@ -1,0 +1,16 @@
+{
+  "name": "sae_402",
+  "version": "1.0.0",
+  "description": "* Faire un jeu browser de A-Z\r * Multijoueur (2~4 joueurs)\r * Thème libre\r * Rendre code, vidéo, compte-rendu pour la soutenance du 20 Mars 2026\r * Soutenance 25min\r * Compte-rendu (PDF) explique déroulement du projet, évolution du code etc..",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
