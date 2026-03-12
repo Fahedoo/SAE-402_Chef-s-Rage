@@ -8,8 +8,10 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // --- CONFIGURATION DES DOSSIERS ---
-// On sert les fichiers qui sont dans le dossier "public"
-app.use(express.static(path.join(__dirname, '../public')));
+// On sert les fichiers qui sont dans le dossier "Public" (Attention à la majuscule "P" sur Linux !)
+app.use(express.static(path.join(__dirname, '../Public')));
+// On expose aussi le dossier assets
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
 
 // --- ÉTAT DU SERVEUR ---
 const players = {};
@@ -49,7 +51,7 @@ io.on('connection', (socket) => {
         // On envoie la liste de tous les joueurs à tout le monde pour remplir les SLOTS
         io.emit('currentPlayers', players);
 
-        // On envoie la config actuelle (si le chef a déjà changé des trucs)
+        // On envoie la config actuelle au SEUL nouveau joueur
         socket.emit('configUpdated', gameConfig);
 
         console.log(`${players[socket.id].pseudo} est entré (Chef: ${isChef})`);

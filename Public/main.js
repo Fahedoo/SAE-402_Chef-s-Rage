@@ -107,6 +107,32 @@ socket.on('currentPlayers', (players) => updatePlayersSlots(players));
 socket.on('newPlayer', () => socket.emit('get_players_update')); // Optionnel selon Raph
 socket.on('playerDisconnected', () => socket.emit('get_players_update'));
 
+// RÉCEPTION DE LA CONFIGURATION (soit au login, soit quand le chef change)
+socket.on('configUpdated', (config) => {
+    nbPlayers = config.nbPlayers;
+    modeAmi = config.modeAmi;
+    
+    // Met à jour l'UI pour la taille de la brigade
+    if(nbPlayers === 2) {
+        opt2.classList.add('active');
+        opt4.classList.remove('active');
+        extraSlots.forEach(s => s.style.display = 'none');
+    } else {
+        opt4.classList.add('active');
+        opt2.classList.remove('active');
+        extraSlots.forEach(s => s.style.display = 'block');
+    }
+
+    // Met à jour l'UI pour le mode de jeu
+    if(modeAmi) {
+        optAmi.classList.add('active');
+        optEnnemi.classList.remove('active');
+    } else {
+        optEnnemi.classList.add('active');
+        optAmi.classList.remove('active');
+    }
+});
+
 // Choix 2/4 Joueurs (Seul l'admin clique, mais on prévoit la synchro)
 const opt2 = document.getElementById('opt-2-players');
 const opt4 = document.getElementById('opt-4-players');
