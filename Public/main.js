@@ -1,14 +1,24 @@
+// ==========================================
+// 1. ÉTAT DU JEU (POST-ITS)
+// ==========================================
 let currentPseudo = "";
 let selectedColor = "gray";
 let nbPlayers = 2;
 let modeAmi = true;
 let isPaused = false;
 
+// ==========================================
+// 2. NAVIGATION (SPA)
+// ==========================================
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(screenId);
     if (target) target.classList.add('active');
 }
+
+// ==========================================
+// 3. LOGIQUE CONNEXION (LOGIN)
+// ==========================================
 
 // Sélection couleur
 document.querySelectorAll('.color-opt').forEach(opt => {
@@ -19,18 +29,25 @@ document.querySelectorAll('.color-opt').forEach(opt => {
     });
 });
 
-// Connexion -> Lobby
+// Bouton Connexion -> Envoi à Raph
 document.getElementById('btn-to-lobby').addEventListener('click', () => {
     const input = document.getElementById('pseudo');
     currentPseudo = input.value.trim();
+    
     if (currentPseudo !== "") {
-        const mySlot = document.getElementById('slot-1');
-        if(mySlot) mySlot.innerText = currentPseudo.toUpperCase() + " (MOI)";
+        // INFO POUR RAPH : On envoie les données de connexion
+        console.log("LOGIN envoyé :", currentPseudo, selectedColor);
+        /* socket.emit('login', { pseudo: currentPseudo, color: selectedColor }); */
+        
         showScreen('screen-lobby');
     } else {
         alert("Hé commis ! Entre un nom !");
     }
 });
+
+// ==========================================
+// 4. LOGIQUE LOBBY (RÉGLAGES)
+// ==========================================
 
 // Choix 2/4 Joueurs
 const opt2 = document.getElementById('opt-2-players');
@@ -67,9 +84,44 @@ optEnnemi.addEventListener('click', () => {
     optAmi.classList.remove('active');
 });
 
-// Lancement
+// FONCTION POUR RAPH : Remplir les slots quand les gens arrivent
+function updatePlayersSlots(playersList) {
+    for (let i = 1; i <= 4; i++) {
+        const slot = document.getElementById(`slot-${i}`);
+        slot.innerText = "EN ATTENTE...";
+        slot.classList.remove('active');
+    }
+    playersList.forEach((player, index) => {
+        const slotNum = index + 1;
+        const slotEl = document.getElementById(`slot-${slotNum}`);
+        if (slotEl) {
+            slotEl.innerText = player.pseudo.toUpperCase() + (player.pseudo === currentPseudo ? " (MOI)" : "");
+            slotEl.classList.add('active');
+        }
+    });
+}
+
+// FONCTION POUR RAPH : Verrouiller si on n'est pas le chef
+function setGuestMode() {
+    document.getElementById('btn-start-service').style.display = 'none';
+    document.getElementById('wait-message').style.display = 'block';
+    document.querySelectorAll('.choice-card').forEach(card => {
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.5';
+    });
+}
+
+// ==========================================
+// 5. LOGIQUE JEU (GAMEPLAY & HUD)
+// ==========================================
+
+// Lancement (Appelé par le bouton Start ou par le signal de Raph)
 document.getElementById('btn-start-service').addEventListener('click', () => {
+    // INFO POUR RAPH : On prévient que le chef lance
+    /* socket.emit('start_service', { nbPlayers, modeAmi }); */
+    
     showScreen('screen-game');
+    resizeCanvas();
     startTestTimer();
 });
 
@@ -77,97 +129,68 @@ function startTestTimer() {
     let timeLeft = 180;
     const timerDisplay = document.getElementById('timer');
     const countdown = setInterval(() => {
-        timeLeft--;
-        const mins = Math.floor(timeLeft / 60);
-        const secs = timeLeft % 60;
-        timerDisplay.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            showScreen('screen-login');
+        if (!isPaused) {
+            timeLeft--;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            timerDisplay.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                endGame(false);
+            }
         }
     }, 1000);
 }
 
-function resizeCanvas() {
-    const canvas = document.getElementById('gameCanvas');
-    if (canvas) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        console.log(`Canvas redimensionné : ${canvas.width}x${canvas.height}`);
-    }
-}
-
-// On écoute si l'utilisateur change la taille de sa fenêtre
-window.addEventListener('resize', resizeCanvas);
-
-// MODIFIE ton bouton de lancement pour appeler resizeCanvas
-document.getElementById('btn-start-service').addEventListener('click', () => {
-    showScreen('screen-game');
-    resizeCanvas(); // On ajuste la taille juste au moment où le jeu commence
-    startTestTimer();
-});
-
-
-// --- GESTION DE LA FIN DE PARTIE ---
 function endGame(isVictory) {
     const resultScreen = document.getElementById('screen-result');
     const resultTitle = document.getElementById('result-title');
     const finalScoreDisplay = document.getElementById('final-score');
     const currentScore = document.getElementById('score').innerText;
 
-    // On change le style selon le résultat
+    resultScreen.classList.remove('victory', 'game-over');
     if (isVictory) {
         resultScreen.classList.add('victory');
-        resultScreen.classList.remove('game-over');
         resultTitle.innerText = "MISSION RÉUSSIE !";
     } else {
         resultScreen.classList.add('game-over');
-        resultScreen.classList.remove('victory');
         resultTitle.innerText = "BRIGADE VIRÉE !";
     }
-
     finalScoreDisplay.innerText = currentScore;
     showScreen('screen-result');
 }
 
-// --- GESTION DE LA PAUSE ---
+// ==========================================
+// 6. SYSTÈME (RESIZE, PAUSE, CLAVIER)
+// ==========================================
+
+function resizeCanvas() {
+    const canvas = document.getElementById('gameCanvas');
+    if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+}
+
 function togglePause() {
-    // On ne peut mettre en pause que si on est sur l'écran de jeu
     if (document.getElementById('screen-game').classList.contains('active')) {
         isPaused = !isPaused;
         const pauseOverlay = document.getElementById('pause-overlay');
         pauseOverlay.style.display = isPaused ? 'flex' : 'none';
-        
-        // Ici, on pourrait ajouter un stop sur la musique ou le timer
-        console.log(isPaused ? "Jeu en pause" : "Reprise du service");
     }
 }
 
-// Écouteur de touches (Clavier)
+window.addEventListener('resize', resizeCanvas);
+
 document.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        togglePause();
+    // PAUSE
+    if (e.key === "Escape") togglePause();
+    
+    // INTERACTION (Touche E demandée par Raph)
+    if (e.key.toLowerCase() === "e") {
+        console.log("Action : Touche E pressée");
+        /* socket.emit('toggleLever'); */
     }
 });
 
-// Bouton reprendre
 document.getElementById('btn-resume').addEventListener('click', togglePause);
-
-// MODIF : On change la fin du timer pour appeler endGame
-function startTestTimer() {
-    let timeLeft = 180;
-    const timerDisplay = document.getElementById('timer');
-    const countdown = setInterval(() => {
-        if (!isPaused) { // On ne baisse le temps que si on n'est pas en pause
-            timeLeft--;
-            const mins = Math.floor(timeLeft / 60);
-            const secs = timeLeft % 60;
-            timerDisplay.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-            
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                endGame(false); // Temps écoulé = Défaite
-            }
-        }
-    }, 1000);
-}
