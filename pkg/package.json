@@ -1,0 +1,11 @@
+{
+  "name": "physics",
+  "version": "0.1.0",
+  "files": [
+    "physics_bg.wasm",
+    "physics.js",
+    "physics.d.ts"
+  ],
+  "main": "physics.js",
+  "types": "physics.d.ts"
+}
