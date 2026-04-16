@@ -1,0 +1,339 @@
+/* ==========================================
+   1. BASES & RESET
+   ========================================== */
+/* On enlève les marges par défaut des navigateurs pour un rendu propre */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Le corps de la page : fond d'ambiance et centrage absolu */
+body {
+    background-image: url('assets/fond_ambiance.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: #ffffff;
+    font-family: 'Press Start 2P', cursive;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Empêche le scroll de la page */
+}
+
+/* ==========================================
+   2. SYSTÈME D'ÉCRANS (SPA)
+   ========================================== */
+/* Les écrans sont cachés par défaut (display: none) */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Fond semi-transparent pour assombrir l'ambiance */
+    z-index: 1;
+}
+
+/* La classe .active rend l'écran visible */
+.screen.active {
+    display: flex;
+    z-index: 10;
+}
+
+/* L'écran de jeu n'a pas de fond noir pour laisser voir le jeu */
+#screen-game {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: transparent;
+}
+
+/* ==========================================
+   3. COMPOSANTS UI GÉNÉRAUX (Titre, Boutons, Input)
+   ========================================== */
+.retro-title {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.retro-title .white {
+    color: #ffffff;
+    text-shadow: 4px 4px #444; /* Effet d'ombre rétro */
+}
+
+.retro-title .red {
+    color: #FF004D;
+    text-shadow: 4px 4px #5a001b;
+}
+
+/* La boîte des menus au centre */
+.menu-box {
+    background: #1a1a1a;
+    border: 6px solid #FFCC00; /* Bordure dorée type Arcade */
+    padding: 50px;
+    box-shadow: 0 0 40px rgba(255, 204, 0, 0.2);
+    max-width: 900px;
+    width: 95%;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.label {
+    font-size: 0.9rem;
+    color: #FFCC00;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    display: block;
+}
+
+/* Champ de texte (Pseudo) */
+input[type="text"] {
+    background: #000;
+    border: 3px solid #333;
+    color: #00FF41; /* Vert Matrix */
+    padding: 20px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.2rem;
+    width: 100%;
+    outline: none;
+}
+
+/* Boutons d'action */
+button {
+    background: #FF004D;
+    color: white;
+    border: none;
+    padding: 20px;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+    box-shadow: 0 6px #8b002a; /* Faux effet 3D (épaisseur en bas) */
+    transition: all 0.1s;
+}
+
+/* Quand on clique, on abaisse le bouton pour écraser la fausse 3D */
+button:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px #8b002a;
+}
+
+/* ==========================================
+   4. ÉCRAN DE CONNEXION (Sélection de couleur)
+   ========================================== */
+.color-picker {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.color-opt {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #333;
+    cursor: pointer;
+}
+
+.color-opt.active {
+    border-color: #00FF41; /* La sélection s'allume en vert */
+}
+
+/* ==========================================
+   5. ÉCRAN LOBBY (Vestiaire)
+   ========================================== */
+.selection-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.choice-card {
+    background: #000;
+    border: 4px solid #333;
+    padding: 25px 15px;
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.choice-card.active {
+    border-color: #FFCC00;
+    transform: scale(1.02); /* Grossit légèrement quand sélectionné */
+}
+
+/* Couleurs spécifiques selon le mode choisi */
+.mode-ami.active {
+    border-color: #00FF41;
+    color: #00FF41;
+}
+
+.mode-ennemi.active {
+    border-color: #FF004D;
+    color: #FF004D;
+}
+
+.slots-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    border-top: 3px dashed #333;
+    padding-top: 40px;
+}
+
+/* Emplacements des joueurs dans le lobby */
+.slot {
+    background: #000;
+    border: 3px solid #222;
+    padding: 30px 15px;
+    font-size: 0.8rem;
+    color: #444;
+    text-align: center;
+    border-radius: 8px;
+}
+
+.slot.active {
+    color: #00FF41;
+    border-color: #00FF41;
+}
+
+/* ==========================================
+   6. ÉCRAN DE JEU (HUD & Panneaux)
+   ========================================== */
+#hud {
+    width: 100%;
+    z-index: 10;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    color: #FFCC00;
+    border-bottom: 4px solid #FF004D;
+}
+
+#gameCanvas {
+    background-image: url('assets/fond.jpg');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 900px;
+    flex-grow: 1;
+    display: block;
+    image-rendering: pixelated; /* Pour garder l'aspect Pixel Art sans flou */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+/* Les petits panneaux flottants (Mémo et Inventaire) */
+.kitchen-panel {
+    position: absolute;
+    bottom: 30px;
+    left: 20px;
+    width: 250px;
+    background: #1a1a1a;
+    border: 6px solid #8b4513; /* Cadre marron façon bois/ardoise */
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    text-align: left;
+    z-index: 100;
+    transition: opacity 1.5s ease;
+    pointer-events: none; /* Le clic passe à travers pour ne pas gêner le jeu */
+}
+
+.panel-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #f1c40f;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 2px solid #555;
+    padding-bottom: 5px;
+}
+
+.kitchen-panel p {
+    color: #eee;
+    font-size: 12px;
+    margin: 8px 0;
+    font-family: Arial, sans-serif;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+/* Design des touches de clavier */
+.kitchen-key {
+    background: #eee;
+    color: #1a1a1a;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border-bottom: 2px solid #999;
+    margin: 0 4px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+}
+
+.panel-hint {
+    margin-top: 15px;
+    font-size: 10px;
+    color: #aaa;
+    font-style: italic;
+    text-align: center;
+}
+
+.inventory-box {
+    position: absolute;
+    bottom: 30px;
+    left: 300px; /* Décalé vers la droite pour ne pas cacher le mémo */
+    width: 140px;
+    height: 110px;
+    background: #1a1a1a;
+    border: 5px solid #8b4513;
+    z-index: 100;
+    text-align: center;
+    padding: 10px;
+}
+
+.inventory-slot {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+}
+
+#inventory-empty {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #444;
+}
+
+/* Petite animation au ramassage d'un objet */
+.powerup-pop {
+    animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop {
+    0% { transform: scale(0.5); }
+    100% { transform: scale(1); }
+}
+
+/*  CLASSES NOUVEL ECRAN DE FIN (Victoire / Defaite) */
+.text-glow-green {
+    color: #00FF41;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.4);
+}
+
+.text-shake-red {
+    color: #FF004D;
+    text-shadow: 2px 2px #5a001b;
+}
