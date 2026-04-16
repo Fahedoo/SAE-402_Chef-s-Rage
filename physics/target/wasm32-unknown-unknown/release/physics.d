@@ -1,0 +1,1 @@
+/Users/selmagosset-petelet/Documents/SAE-402_Chef-s-Rage-main/physics/target/wasm32-unknown-unknown/release/physics.wasm: /Users/selmagosset-petelet/Documents/SAE-402_Chef-s-Rage-main/physics/src/lib.rs
